@@ -1,9 +1,6 @@
 
 import { useState, useRef } from 'react';
 import { useOrbitOS, Window } from '../context/OrbitOSContext';
-import { X, Minus, Maximize } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { toast } from 'sonner';
 
 interface Position {
   x: number;
@@ -124,15 +121,12 @@ const WindowManager = () => {
           <div
             key={window.id}
             ref={el => (windowRefs.current[window.id] = el)}
-            className={`orbit-window absolute animate-scale-in`}
+            className="orbit-window absolute animate-scale-in"
             style={{
               width: window.width,
               height: window.height,
               transform: `translate(${window.x}px, ${window.y}px)`,
               zIndex: window.zIndex,
-              boxShadow: window.isActive 
-                ? '0 10px 25px -5px rgba(0, 0, 0, 0.3), 0 10px 10px -5px rgba(0, 0, 0, 0.04)' 
-                : '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)',
             }}
             onClick={() => focusWindow(window.id)}
           >
@@ -146,7 +140,7 @@ const WindowManager = () => {
                 <div className="flex items-center gap-1.5">
                   <span className="h-3 w-3 rounded-full bg-red-500 hover:bg-red-600 cursor-pointer" onClick={(e) => {e.stopPropagation(); closeWindow(window.id);}}></span>
                   <span className="h-3 w-3 rounded-full bg-yellow-500 hover:bg-yellow-600 cursor-pointer" onClick={(e) => {e.stopPropagation(); minimizeWindow(window.id);}}></span>
-                  <span className="h-3 w-3 rounded-full bg-green-500 hover:bg-green-600 cursor-pointer" onClick={(e) => {e.stopPropagation(); toast.info("Maximize feature coming soon");}}></span>
+                  <span className="h-3 w-3 rounded-full bg-green-500 hover:bg-green-600 cursor-pointer"></span>
                 </div>
                 <span className="text-sm font-medium ml-2">{window.title}</span>
               </div>

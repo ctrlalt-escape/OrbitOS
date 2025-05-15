@@ -78,12 +78,12 @@ const CalculatorApp = () => {
     setWaitingForSecondOperand(true);
   };
 
-  const buttonStyle = "w-full h-14 bg-gray-200 hover:bg-gray-300 transition-colors rounded-md font-medium";
-  const operatorButtonStyle = "w-full h-14 bg-orange-500 hover:bg-orange-600 transition-colors rounded-md text-white font-medium";
+  const buttonStyle = "w-full h-12 bg-gray-100 hover:bg-gray-200 transition-colors rounded-md font-medium";
+  const operatorButtonStyle = "w-full h-12 bg-blue-500 hover:bg-blue-600 transition-colors rounded-md text-white font-medium";
 
   return (
-    <div className="flex flex-col p-4 h-full bg-gray-100">
-      <div className="bg-gray-800 text-white p-4 rounded-lg mb-4">
+    <div className="flex flex-col p-4 h-full bg-white">
+      <div className="bg-gray-100 p-4 rounded-lg mb-4">
         <div className="text-right text-3xl font-light tracking-tight h-10 overflow-hidden">
           {display}
         </div>
@@ -109,7 +109,7 @@ const CalculatorApp = () => {
         <button onClick={() => inputDigit('3')} className={buttonStyle}>3</button>
         <button onClick={() => performOperation('+')} className={operatorButtonStyle}>+</button>
 
-        <button onClick={() => inputDigit('0')} className="col-span-2 h-14 bg-gray-200 hover:bg-gray-300 transition-colors rounded-md font-medium">0</button>
+        <button onClick={() => inputDigit('0')} className="col-span-2 h-12 bg-gray-100 hover:bg-gray-200 transition-colors rounded-md font-medium">0</button>
         <button onClick={inputDecimal} className={buttonStyle}>.</button>
         <button onClick={handleEquals} className={operatorButtonStyle}>=</button>
       </div>

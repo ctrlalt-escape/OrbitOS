@@ -1,5 +1,7 @@
 
 import React, { useState } from 'react';
+import { Button } from '@/components/ui/button';
+import { Image, Maximize2, X, ZoomIn, ZoomOut, RotateCw } from 'lucide-react';
 
 // Sample photos data
 const samplePhotos = [
@@ -44,10 +46,14 @@ const samplePhotos = [
 const PhotosApp = () => {
   const [selectedPhoto, setSelectedPhoto] = useState<typeof samplePhotos[0] | null>(null);
   const [view, setView] = useState<'grid' | 'detail'>('grid');
+  const [zoomLevel, setZoomLevel] = useState(1);
+  const [rotation, setRotation] = useState(0);
 
   const handlePhotoClick = (photo: typeof samplePhotos[0]) => {
     setSelectedPhoto(photo);
     setView('detail');
+    setZoomLevel(1);
+    setRotation(0);
   };
 
   const handleBack = () => {
@@ -55,23 +61,43 @@ const PhotosApp = () => {
     setView('grid');
   };
 
+  const handleZoomIn = () => {
+    setZoomLevel(prev => Math.min(prev + 0.2, 3));
+  };
+
+  const handleZoomOut = () => {
+    setZoomLevel(prev => Math.max(prev - 0.2, 0.5));
+  };
+
+  const handleRotate = () => {
+    setRotation(prev => (prev + 90) % 360);
+  };
+
   return (
-    <div className="flex flex-col h-full bg-gray-100">
+    <div className="flex flex-col h-full bg-white">
       {/* Toolbar */}
-      <div className="bg-gray-200 p-2 flex justify-between items-center border-b border-gray-300">
+      <div className="p-2 flex justify-between items-center border-b">
         {view === 'detail' ? (
-          <button 
+          <Button 
+            variant="ghost" 
             onClick={handleBack} 
-            className="px-3 py-1 bg-blue-500 text-white rounded-md hover:bg-blue-600 transition-colors"
+            className="px-3 py-1 text-sm"
           >
-            Back to Photos
-          </button>
+            Back
+          </Button>
         ) : (
           <div className="text-gray-800 font-medium">All Photos</div>
         )}
         <div className="flex gap-2">
-          <button className="px-3 py-1 bg-gray-300 hover:bg-gray-400 rounded-md transition-colors text-sm">Import</button>
-          <button className="px-3 py-1 bg-gray-300 hover:bg-gray-400 rounded-md transition-colors text-sm">Share</button>
+          {view === 'detail' && (
+            <>
+              <Button variant="ghost" size="sm" onClick={handleZoomIn}><ZoomIn className="h-4 w-4" /></Button>
+              <Button variant="ghost" size="sm" onClick={handleZoomOut}><ZoomOut className="h-4 w-4" /></Button>
+              <Button variant="ghost" size="sm" onClick={handleRotate}><RotateCw className="h-4 w-4" /></Button>
+            </>
+          )}
+          <Button variant="ghost" size="sm" className="text-sm">Import</Button>
+          <Button variant="ghost" size="sm" className="text-sm">Share</Button>
         </div>
       </div>
       
@@ -82,7 +108,7 @@ const PhotosApp = () => {
             {samplePhotos.map(photo => (
               <div 
                 key={photo.id} 
-                className="aspect-square overflow-hidden rounded-md shadow-md cursor-pointer hover:opacity-90 transition-opacity"
+                className="aspect-square overflow-hidden rounded-md cursor-pointer hover:bg-gray-50 transition-colors"
                 onClick={() => handlePhotoClick(photo)}
               >
                 <img 
@@ -98,11 +124,15 @@ const PhotosApp = () => {
             <div className="flex flex-col h-full">
               <h2 className="text-xl font-medium mb-2">{selectedPhoto.title}</h2>
               <p className="text-gray-500 mb-4">Taken on {selectedPhoto.date}</p>
-              <div className="flex-1 flex items-center justify-center bg-black rounded-md overflow-hidden">
+              <div className="flex-1 flex items-center justify-center rounded-md overflow-hidden">
                 <img 
                   src={selectedPhoto.url} 
                   alt={selectedPhoto.title} 
                   className="max-h-full max-w-full object-contain"
+                  style={{ 
+                    transform: `scale(${zoomLevel}) rotate(${rotation}deg)`,
+                    transition: 'transform 0.2s ease'
+                  }}
                 />
               </div>
             </div>
