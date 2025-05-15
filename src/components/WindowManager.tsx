@@ -85,11 +85,15 @@ const WindowManager = () => {
       if (window) {
         const windowElem = windowRefs.current[window.id];
         if (windowElem) {
-          const transform = window.getComputedStyle(windowElem).transform;
-          // Extract translation values from matrix
-          const matrix = new DOMMatrix(transform);
-          window.x = matrix.m41;
-          window.y = matrix.m42;
+          const transform = windowElem.style.transform;
+          // Extract translation values from transform
+          const match = transform.match(/translate\(([^,]+)px,\s*([^)]+)px\)/);
+          if (match) {
+            const x = parseFloat(match[1]);
+            const y = parseFloat(match[2]);
+            window.x = x;
+            window.y = y;
+          }
         }
       }
       setDragging(null);
@@ -139,33 +143,12 @@ const WindowManager = () => {
               onDoubleClick={() => minimizeWindow(window.id)}
             >
               <div className="flex items-center gap-2">
-                <span className="text-sm font-medium">{window.title}</span>
-              </div>
-              <div className="flex gap-1">
-                <Button 
-                  variant="ghost" 
-                  size="icon" 
-                  className="h-5 w-5 rounded-full hover:bg-black/20"
-                  onClick={() => minimizeWindow(window.id)}
-                >
-                  <Minus size={12} />
-                </Button>
-                <Button 
-                  variant="ghost" 
-                  size="icon" 
-                  className="h-5 w-5 rounded-full hover:bg-black/20"
-                  onClick={() => toast.info("This feature is not implemented yet")}
-                >
-                  <Maximize size={12} />
-                </Button>
-                <Button 
-                  variant="ghost" 
-                  size="icon" 
-                  className="h-5 w-5 rounded-full hover:bg-red-500 hover:text-white"
-                  onClick={() => closeWindow(window.id)}
-                >
-                  <X size={12} />
-                </Button>
+                <div className="flex items-center gap-1.5">
+                  <span className="h-3 w-3 rounded-full bg-red-500 hover:bg-red-600 cursor-pointer" onClick={(e) => {e.stopPropagation(); closeWindow(window.id);}}></span>
+                  <span className="h-3 w-3 rounded-full bg-yellow-500 hover:bg-yellow-600 cursor-pointer" onClick={(e) => {e.stopPropagation(); minimizeWindow(window.id);}}></span>
+                  <span className="h-3 w-3 rounded-full bg-green-500 hover:bg-green-600 cursor-pointer" onClick={(e) => {e.stopPropagation(); toast.info("Maximize feature coming soon");}}></span>
+                </div>
+                <span className="text-sm font-medium ml-2">{window.title}</span>
               </div>
             </div>
             

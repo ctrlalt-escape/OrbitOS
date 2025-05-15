@@ -4,7 +4,7 @@ import { useOrbitOS } from '../context/OrbitOSContext';
 import { Button } from '@/components/ui/button';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { Bell, Settings, LogOut, X, Minus, LayoutGrid, Clock } from 'lucide-react';
+import { Bell, Settings, LogOut, Clock, Wifi, Battery, Volume2 } from 'lucide-react';
 import WindowManager from '@/components/WindowManager';
 import { toast } from 'sonner';
 import AppMenu from '@/components/AppMenu';
@@ -16,6 +16,9 @@ import FilesApp from '@/components/apps/FilesApp';
 import SettingsApp from '@/components/apps/SettingsApp';
 import CalendarApp from '@/components/apps/CalendarApp';
 import TerminalApp from '@/components/apps/TerminalApp';
+import CalculatorApp from '@/components/apps/CalculatorApp';
+import PhotosApp from '@/components/apps/PhotosApp';
+import MailApp from '@/components/apps/MailApp';
 
 const Desktop = () => {
   const { user, logout, windows, openWindow, notifications, markNotificationAsRead } = useOrbitOS();
@@ -70,6 +73,24 @@ const Desktop = () => {
       name: 'Terminal', 
       icon: '/apps/terminal.svg', 
       component: <TerminalApp /> 
+    },
+    { 
+      id: 'calculator', 
+      name: 'Calculator', 
+      icon: 'https://cdn-icons-png.flaticon.com/512/2374/2374370.png', 
+      component: <CalculatorApp /> 
+    },
+    { 
+      id: 'photos', 
+      name: 'Photos', 
+      icon: 'https://cdn-icons-png.flaticon.com/512/1088/1088537.png', 
+      component: <PhotosApp /> 
+    },
+    { 
+      id: 'mail', 
+      name: 'Mail', 
+      icon: 'https://cdn-icons-png.flaticon.com/512/561/561127.png', 
+      component: <MailApp /> 
     }
   ];
 
@@ -80,162 +101,64 @@ const Desktop = () => {
   
   const handleOpenApp = (app: any) => {
     openWindow(app);
+    setIsAppMenuOpen(false);
   };
 
   return (
     <div className="flex flex-col h-full">
-      {/* Desktop Area */}
-      <div 
-        className="flex-grow bg-orbit-bg bg-[url('https://images.unsplash.com/photo-1484950763426-56b5bf172dbb?q=80&w=2070&auto=format&fit=crop')] bg-cover bg-center relative"
-      >
-        {/* Desktop Icons */}
-        <div className="p-4 grid grid-cols-[repeat(auto-fill,minmax(6rem,1fr))] gap-2">
-          {apps.map((app) => (
-            <div 
-              key={app.id} 
-              className="app-icon" 
-              onClick={() => handleOpenApp(app)}
-            >
-              <div className="app-icon-img flex items-center justify-center bg-white/20 backdrop-blur-sm">
-                <img src={app.icon} alt={app.name} className="w-8 h-8" />
-              </div>
-              <span className="text-white text-xs mt-1 text-center font-medium drop-shadow-md">
-                {app.name}
-              </span>
-            </div>
-          ))}
-        </div>
-
-        {/* Window Manager */}
-        <WindowManager />
-      </div>
-
-      {/* Taskbar */}
-      <div className="orbit-taskbar h-12 text-white">
-        {/* Start Button / App Menu */}
-        <Popover open={isAppMenuOpen} onOpenChange={setIsAppMenuOpen}>
-          <PopoverTrigger asChild>
+      {/* Menu Bar (like macOS) */}
+      <div className="h-8 bg-black/80 backdrop-blur-lg text-white flex items-center px-3 justify-between">
+        <div className="flex items-center gap-4">
+          <div className="flex items-center">
             <Button 
               variant="ghost" 
-              size="icon"
-              className="h-10 w-10 rounded-full bg-orbit-accent text-white hover:bg-orbit-accent/80"
+              size="sm"
+              className="text-white hover:bg-white/10 rounded-md p-1 h-auto"
+              onClick={() => setIsAppMenuOpen(!isAppMenuOpen)}
             >
-              <LayoutGrid size={20} />
+              <svg className="h-5 w-5" viewBox="0 0 1024 1024" version="1.1" xmlns="http://www.w3.org/2000/svg">
+                <path d="M512 93.866667c230.4 0 418.133333 187.733333 418.133333 418.133333s-187.733333 418.133333-418.133333 418.133333S93.866667 742.4 93.866667 512 281.6 93.866667 512 93.866667z m0 746.666666c179.2 0 328.533333-149.333333 328.533333-328.533333S691.2 183.466667 512 183.466667 183.466667 332.8 183.466667 512s149.333333 328.533333 328.533333 328.533333z" fill="currentColor" />
+              </svg>
             </Button>
-          </PopoverTrigger>
-          <PopoverContent 
-            className="w-80 p-0 border-orbit-border bg-orbit-bg/95 backdrop-blur-md" 
-            align="start" 
-            side="top"
-            sideOffset={10}
-          >
-            <AppMenu apps={apps} onSelectApp={(app) => {
-              handleOpenApp(app);
-              setIsAppMenuOpen(false);
-            }} />
-          </PopoverContent>
-        </Popover>
+            <span className="font-semibold ml-2">OrbitOS</span>
+          </div>
 
-        {/* Open Windows */}
-        <div className="flex-1 ml-2 flex items-center gap-1 overflow-x-auto">
-          {windows.map((window) => {
-            const app = apps.find(a => a.id === window.app);
-            if (!app) return null;
-            
-            return (
-              <Tooltip key={window.id}>
-                <TooltipTrigger asChild>
-                  <Button 
-                    variant={window.isActive ? "secondary" : "ghost"}
-                    size="sm"
-                    className="h-8 px-2 text-xs"
-                    onClick={() => window.isMinimized ? useOrbitOS().restoreWindow(window.id) : useOrbitOS().focusWindow(window.id)}
-                  >
-                    <img src={app.icon} alt={window.title} className="w-4 h-4 mr-1.5" />
-                    {window.title}
-                  </Button>
-                </TooltipTrigger>
-                <TooltipContent>
-                  {window.isMinimized ? "Restore" : "Switch to"} {window.title}
-                </TooltipContent>
-              </Tooltip>
-            );
-          })}
+          {/* Active app menu items - would be dynamic based on focused app */}
+          <div className="flex items-center gap-3 text-sm">
+            <span className="hover:bg-white/10 px-2 py-1 rounded cursor-pointer">File</span>
+            <span className="hover:bg-white/10 px-2 py-1 rounded cursor-pointer">Edit</span>
+            <span className="hover:bg-white/10 px-2 py-1 rounded cursor-pointer">View</span>
+            <span className="hover:bg-white/10 px-2 py-1 rounded cursor-pointer">Help</span>
+          </div>
         </div>
 
-        {/* System Tray */}
-        <div className="flex items-center mr-2">
-          {/* Notifications */}
-          <Popover>
-            <PopoverTrigger asChild>
-              <Button variant="ghost" size="icon" className="relative text-white hover:bg-white/10 h-9 w-9 rounded-full">
-                <Bell size={18} />
-                {notifications.filter(n => !n.read).length > 0 && (
-                  <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-orbit-accent rounded-full" />
-                )}
-              </Button>
-            </PopoverTrigger>
-            <PopoverContent 
-              className="w-80 p-0 border-orbit-border bg-orbit-bg/95 backdrop-blur-md" 
-              align="end"
-              side="top"
-              sideOffset={10}
-            >
-              <div className="p-2 border-b border-orbit-border">
-                <h3 className="font-medium text-white">Notifications</h3>
-              </div>
-              <div className="max-h-96 overflow-y-auto">
-                {notifications.length === 0 ? (
-                  <div className="p-4 text-center text-white/60">
-                    No notifications
-                  </div>
-                ) : (
-                  <>
-                    {notifications.map((notification) => (
-                      <div 
-                        key={notification.id}
-                        className={`p-3 border-b border-orbit-border hover:bg-white/5 cursor-pointer ${notification.read ? 'opacity-60' : ''}`}
-                        onClick={() => markNotificationAsRead(notification.id)}
-                      >
-                        <div className="flex justify-between items-start">
-                          <h4 className="font-medium text-white">{notification.title}</h4>
-                          <span className="text-xs text-white/60">
-                            {new Date(notification.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                          </span>
-                        </div>
-                        <p className="text-sm text-white/80 mt-1">{notification.message}</p>
-                      </div>
-                    ))}
-                  </>
-                )}
-              </div>
-            </PopoverContent>
-          </Popover>
-
-          {/* Clock */}
-          <Button variant="ghost" size="sm" className="text-white hover:bg-white/10 h-9 rounded-full">
-            <Clock size={18} className="mr-1.5" />
+        {/* System Status Icons */}
+        <div className="flex items-center gap-2">
+          <Battery className="h-4 w-4" />
+          <Wifi className="h-4 w-4" />
+          <Volume2 className="h-4 w-4" />
+          <span className="text-sm">
             {currentTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-          </Button>
+          </span>
 
           {/* User Menu */}
           <Popover>
             <PopoverTrigger asChild>
-              <Button variant="ghost" size="icon" className="ml-1 rounded-full p-0 h-8 w-8 overflow-hidden">
+              <Button variant="ghost" size="icon" className="rounded-full p-0 h-6 w-6 overflow-hidden ml-2">
                 <img 
                   src={user?.avatar} 
                   alt={user?.username} 
-                  className="h-8 w-8 object-cover"
+                  className="h-6 w-6 object-cover"
                 />
               </Button>
             </PopoverTrigger>
             <PopoverContent 
-              className="w-56 p-0 border-orbit-border bg-orbit-bg/95 backdrop-blur-md" 
+              className="w-56 p-0 border-gray-200 bg-white/90 backdrop-blur-md" 
               align="end"
-              side="top"
-              sideOffset={10}
+              side="bottom"
+              sideOffset={5}
             >
-              <div className="p-3 border-b border-orbit-border">
+              <div className="p-3 border-b border-gray-200">
                 <div className="flex items-center gap-3">
                   <img 
                     src={user?.avatar} 
@@ -243,8 +166,8 @@ const Desktop = () => {
                     className="h-10 w-10 rounded-full"
                   />
                   <div>
-                    <h3 className="font-medium text-white">{user?.username}</h3>
-                    <p className="text-xs text-white/60">Logged in</p>
+                    <h3 className="font-medium">{user?.username}</h3>
+                    <p className="text-xs text-gray-500">Logged in</p>
                   </div>
                 </div>
               </div>
@@ -252,7 +175,7 @@ const Desktop = () => {
                 <Button 
                   variant="ghost" 
                   size="sm" 
-                  className="w-full justify-start text-white hover:bg-white/10"
+                  className="w-full justify-start"
                   onClick={() => handleOpenApp(apps.find(a => a.id === 'settings'))}
                 >
                   <Settings size={16} className="mr-2" />
@@ -261,7 +184,7 @@ const Desktop = () => {
                 <Button 
                   variant="ghost" 
                   size="sm" 
-                  className="w-full justify-start text-white hover:bg-white/10"
+                  className="w-full justify-start"
                   onClick={handleLogout}
                 >
                   <LogOut size={16} className="mr-2" />
@@ -271,6 +194,73 @@ const Desktop = () => {
             </PopoverContent>
           </Popover>
         </div>
+      </div>
+
+      {/* Desktop Area */}
+      <div 
+        className="flex-grow bg-gradient-to-b from-blue-800 to-purple-900 bg-cover bg-center relative"
+      >
+        {/* Dock */}
+        <div className="absolute left-1/2 transform -translate-x-1/2 bottom-3 flex bg-white/20 backdrop-blur-xl rounded-2xl p-2 shadow-xl border border-white/25">
+          {apps.map((app) => (
+            <Tooltip key={app.id}>
+              <TooltipTrigger asChild>
+                <button 
+                  className="app-icon-dock mx-1 transition-all hover:scale-110"
+                  onClick={() => handleOpenApp(app)}
+                >
+                  <div className="w-12 h-12 rounded-xl flex items-center justify-center bg-white/20 backdrop-blur-sm shadow-lg border border-white/20">
+                    <img src={app.icon} alt={app.name} className="w-8 h-8" />
+                  </div>
+                </button>
+              </TooltipTrigger>
+              <TooltipContent side="top">
+                <p>{app.name}</p>
+              </TooltipContent>
+            </Tooltip>
+          ))}
+          <div className="border-l border-white/20 mx-2 h-10"></div>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <button onClick={() => handleOpenApp(apps.find(a => a.id === 'settings'))} className="app-icon-dock mx-1 transition-all hover:scale-110">
+                <div className="w-12 h-12 rounded-xl flex items-center justify-center bg-white/20 backdrop-blur-sm shadow-lg border border-white/20">
+                  <Settings className="w-7 h-7 text-white" />
+                </div>
+              </button>
+            </TooltipTrigger>
+            <TooltipContent side="top">
+              <p>Settings</p>
+            </TooltipContent>
+          </Tooltip>
+        </div>
+
+        {/* App Menu */}
+        {isAppMenuOpen && (
+          <div className="absolute top-0 left-0 z-50 w-80 bg-gray-900/90 backdrop-blur-xl text-white border border-gray-700 rounded-md mt-8 ml-2 shadow-xl">
+            <AppMenu apps={apps} onSelectApp={handleOpenApp} />
+          </div>
+        )}
+
+        {/* Desktop Icons - simplified for clarity and better usability */}
+        <div className="p-6 grid grid-cols-[repeat(auto-fill,minmax(7rem,1fr))] gap-4">
+          {apps.map((app) => (
+            <button 
+              key={app.id} 
+              className="flex flex-col items-center group"
+              onClick={() => handleOpenApp(app)}
+            >
+              <div className="app-icon-img w-16 h-16 flex items-center justify-center bg-white/10 backdrop-blur-sm rounded-xl mb-2 group-hover:bg-white/20 transition-all border border-white/10 group-hover:scale-105">
+                <img src={app.icon} alt={app.name} className="w-10 h-10" />
+              </div>
+              <span className="text-white text-xs font-medium bg-black/40 px-2 py-1 rounded-md backdrop-blur-sm">
+                {app.name}
+              </span>
+            </button>
+          ))}
+        </div>
+
+        {/* Window Manager */}
+        <WindowManager />
       </div>
     </div>
   );

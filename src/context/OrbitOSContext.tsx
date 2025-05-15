@@ -8,6 +8,14 @@ export interface User {
   avatar: string;
 }
 
+export interface UserAccount {
+  id: string;
+  username: string;
+  password: string;
+  avatar: string;
+  createdAt: Date;
+}
+
 export interface Window {
   id: string;
   title: string;
@@ -43,6 +51,7 @@ interface OrbitOSContextType {
   user: User | null;
   login: (username: string, password: string) => Promise<boolean>;
   logout: () => void;
+  register: (username: string, password: string) => Promise<boolean>;
   windows: Window[];
   openWindow: (app: App) => void;
   closeWindow: (id: string) => void;
@@ -54,6 +63,7 @@ interface OrbitOSContextType {
   addNotification: (notification: Omit<Notification, 'id' | 'timestamp' | 'read'>) => void;
   markNotificationAsRead: (id: string) => void;
   installedApps: string[];
+  userAccounts: UserAccount[];
 }
 
 const OrbitOSContext = createContext<OrbitOSContextType | undefined>(undefined);
@@ -64,15 +74,23 @@ const mockUsers = [
     id: '1',
     username: 'admin',
     password: 'password',
-    avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=admin'
+    avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=admin',
+    createdAt: new Date()
   },
   {
     id: '2',
     username: 'guest',
     password: 'guest',
-    avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=guest'
+    avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=guest',
+    createdAt: new Date()
   }
 ];
+
+// Local storage keys
+const LOCAL_STORAGE_KEYS = {
+  USER: 'orbitOS-user',
+  USER_ACCOUNTS: 'orbitOS-users'
+};
 
 export const OrbitOSProvider = ({ children }: { children: ReactNode }) => {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -81,13 +99,34 @@ export const OrbitOSProvider = ({ children }: { children: ReactNode }) => {
   const [maxZIndex, setMaxZIndex] = useState(1);
   const [apps, setApps] = useState<App[]>([]);
   const [notifications, setNotifications] = useState<Notification[]>([]);
+  const [userAccounts, setUserAccounts] = useState<UserAccount[]>([]);
   const [installedApps, setInstalledApps] = useState<string[]>([
-    'notes', 'browser', 'files', 'settings', 'calendar', 'terminal'
+    'notes', 'browser', 'files', 'settings', 'calendar', 'terminal', 'calculator', 'photos', 'mail'
   ]);
 
+  // Load user accounts from local storage
   useEffect(() => {
-    // Check if user is already logged in (session storage)
-    const savedUser = sessionStorage.getItem('orbitUser');
+    const savedAccounts = localStorage.getItem(LOCAL_STORAGE_KEYS.USER_ACCOUNTS);
+    if (savedAccounts) {
+      try {
+        const parsedAccounts = JSON.parse(savedAccounts);
+        setUserAccounts(parsedAccounts);
+      } catch (error) {
+        console.error('Failed to parse user accounts', error);
+        // Initialize with mock users if parsing fails
+        setUserAccounts(mockUsers);
+        localStorage.setItem(LOCAL_STORAGE_KEYS.USER_ACCOUNTS, JSON.stringify(mockUsers));
+      }
+    } else {
+      // Initialize with mock users if no accounts exist
+      setUserAccounts(mockUsers);
+      localStorage.setItem(LOCAL_STORAGE_KEYS.USER_ACCOUNTS, JSON.stringify(mockUsers));
+    }
+  }, []);
+
+  // Check if user is already logged in
+  useEffect(() => {
+    const savedUser = localStorage.getItem(LOCAL_STORAGE_KEYS.USER);
     if (savedUser) {
       try {
         const parsedUser = JSON.parse(savedUser);
@@ -95,17 +134,56 @@ export const OrbitOSProvider = ({ children }: { children: ReactNode }) => {
         setIsAuthenticated(true);
       } catch (error) {
         console.error('Failed to parse user data', error);
-        sessionStorage.removeItem('orbitUser');
+        localStorage.removeItem(LOCAL_STORAGE_KEYS.USER);
       }
     }
   }, []);
+
+  // Register new user
+  const register = async (username: string, password: string): Promise<boolean> => {
+    // Simulate API call delay
+    await new Promise(resolve => setTimeout(resolve, 800));
+    
+    // Check if username already exists
+    const existingUser = userAccounts.find(u => u.username === username);
+    if (existingUser) {
+      return false;
+    }
+    
+    // Create new user account
+    const newUser = {
+      id: `user-${Date.now()}`,
+      username,
+      password,
+      avatar: `https://api.dicebear.com/7.x/avataaars/svg?seed=${username}`,
+      createdAt: new Date()
+    };
+    
+    const updatedAccounts = [...userAccounts, newUser];
+    setUserAccounts(updatedAccounts);
+    localStorage.setItem(LOCAL_STORAGE_KEYS.USER_ACCOUNTS, JSON.stringify(updatedAccounts));
+    
+    // Auto-login after registration
+    const { password: _, ...userWithoutPassword } = newUser;
+    setUser(userWithoutPassword);
+    setIsAuthenticated(true);
+    localStorage.setItem(LOCAL_STORAGE_KEYS.USER, JSON.stringify(userWithoutPassword));
+    
+    addNotification({
+      title: 'Account Created',
+      message: `Welcome to OrbitOS, ${username}!`,
+      icon: 'bell'
+    });
+    
+    return true;
+  };
 
   // Login logic
   const login = async (username: string, password: string): Promise<boolean> => {
     // Simulate API call delay
     await new Promise(resolve => setTimeout(resolve, 800));
     
-    const foundUser = mockUsers.find(
+    const foundUser = userAccounts.find(
       u => u.username === username && u.password === password
     );
     
@@ -114,8 +192,8 @@ export const OrbitOSProvider = ({ children }: { children: ReactNode }) => {
       setUser(userWithoutPassword);
       setIsAuthenticated(true);
       
-      // Save to session storage
-      sessionStorage.setItem('orbitUser', JSON.stringify(userWithoutPassword));
+      // Save to local storage
+      localStorage.setItem(LOCAL_STORAGE_KEYS.USER, JSON.stringify(userWithoutPassword));
       
       // Add welcome notification
       addNotification({
@@ -135,7 +213,7 @@ export const OrbitOSProvider = ({ children }: { children: ReactNode }) => {
     setUser(null);
     setIsAuthenticated(false);
     setWindows([]);
-    sessionStorage.removeItem('orbitUser');
+    localStorage.removeItem(LOCAL_STORAGE_KEYS.USER);
   };
 
   // Window management
@@ -240,6 +318,7 @@ export const OrbitOSProvider = ({ children }: { children: ReactNode }) => {
     user,
     login,
     logout,
+    register,
     windows,
     openWindow,
     closeWindow,
@@ -250,7 +329,8 @@ export const OrbitOSProvider = ({ children }: { children: ReactNode }) => {
     notifications,
     addNotification,
     markNotificationAsRead,
-    installedApps
+    installedApps,
+    userAccounts
   };
 
   return (
