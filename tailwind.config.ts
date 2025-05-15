@@ -53,16 +53,30 @@ export default {
 					DEFAULT: 'hsl(var(--card))',
 					foreground: 'hsl(var(--card-foreground))'
 				},
-				// OrbitOS custom colors
+				// Navy blue color palette
+				navy: {
+					50: '#f0f4fa',
+					100: '#d9e2f5',
+					200: '#b3c5eb',
+					300: '#8da8e0',
+					400: '#668bd6',
+					500: '#4a6ecc',
+					600: '#3a55b2',
+					700: '#2f4491',
+					800: '#1e2d63',
+					900: '#101d36',
+					950: '#0c1426',
+				},
+				// OrbitOS custom colors (now using the navy palette)
 				orbit: {
-					bg: '#1a1f2c',
-					accent: '#33c3f0',
+					bg: '#101d36',
+					accent: '#4a6ecc',
 					purple: '#9b87f5',
 					orange: '#f97316',
-					window: '#f1f5f9',
-					border: '#64748b',
-					toolbar: '#e2e8f0',
-					hover: 'rgba(51, 195, 240, 0.1)',
+					window: '#1e2d63',
+					border: '#2f4491',
+					toolbar: '#101d36',
+					hover: 'rgba(74, 110, 204, 0.1)',
 				}
 			},
 			borderRadius: {

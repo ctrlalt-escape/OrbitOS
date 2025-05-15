@@ -19,116 +19,11 @@ import TerminalApp from '@/components/apps/TerminalApp';
 import CalculatorApp from '@/components/apps/CalculatorApp';
 import PhotosApp from '@/components/apps/PhotosApp';
 import MailApp from '@/components/apps/MailApp';
-
-// New Music App component
-const MusicApp = () => (
-  <div className="h-full flex flex-col bg-white">
-    <div className="border-b p-3 flex justify-between items-center">
-      <h2 className="text-lg font-medium">Music</h2>
-      <div className="flex items-center space-x-2">
-        <Button variant="ghost" size="sm">Browse</Button>
-        <Button variant="ghost" size="sm">Library</Button>
-      </div>
-    </div>
-    <div className="flex-1 p-4 overflow-auto">
-      <div className="mb-6">
-        <h3 className="text-lg font-semibold mb-3">Recently Played</h3>
-        <div className="grid grid-cols-3 gap-4">
-          {Array(6).fill(0).map((_, i) => (
-            <div key={i} className="flex flex-col">
-              <div className="aspect-square bg-gray-100 rounded-md mb-2"></div>
-              <span className="text-sm font-medium">Album {i+1}</span>
-              <span className="text-xs text-gray-500">Artist {i+1}</span>
-            </div>
-          ))}
-        </div>
-      </div>
-      
-      <div>
-        <h3 className="text-lg font-semibold mb-3">Top Songs</h3>
-        <div className="space-y-2">
-          {Array(10).fill(0).map((_, i) => (
-            <div key={i} className="flex items-center p-2 hover:bg-gray-50 rounded-md">
-              <span className="w-6 text-center text-gray-500">{i+1}</span>
-              <div className="ml-3">
-                <div className="font-medium">Song Title {i+1}</div>
-                <div className="text-xs text-gray-500">Artist Name</div>
-              </div>
-              <div className="ml-auto text-sm text-gray-500">3:45</div>
-            </div>
-          ))}
-        </div>
-      </div>
-    </div>
-    <div className="border-t p-2 flex items-center justify-between">
-      <div className="text-sm">Now Playing: Nothing</div>
-      <div className="flex items-center space-x-2">
-        <Button variant="ghost" size="sm" className="rounded-full">
-          <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <path d="M5 5L19 12L5 19V5Z" fill="currentColor" />
-          </svg>
-        </Button>
-      </div>
-    </div>
-  </div>
-);
-
-// New Weather App component
-const WeatherApp = () => (
-  <div className="h-full flex flex-col bg-white">
-    <div className="border-b p-3 flex justify-between items-center">
-      <h2 className="text-lg font-medium">Weather</h2>
-      <div className="flex items-center space-x-2">
-        <Button variant="ghost" size="sm">Locations</Button>
-        <Button variant="ghost" size="sm">Map</Button>
-      </div>
-    </div>
-    <div className="flex-1 p-4 overflow-auto">
-      <div className="text-center mb-6">
-        <h3 className="text-2xl font-medium">San Francisco</h3>
-        <div className="text-6xl font-light mt-2">72°</div>
-        <div className="text-xl mt-1">Sunny</div>
-        <div className="text-gray-500 mt-1">H:76° L:65°</div>
-      </div>
-      
-      <div className="grid grid-cols-5 gap-4 my-8">
-        {['Mon', 'Tue', 'Wed', 'Thu', 'Fri'].map((day, i) => (
-          <div key={i} className="flex flex-col items-center">
-            <div className="text-sm font-medium">{day}</div>
-            <div className="my-2">
-              <svg className="w-8 h-8 text-yellow-500" viewBox="0 0 24 24" fill="currentColor">
-                <circle cx="12" cy="12" r="5" />
-              </svg>
-            </div>
-            <div className="text-sm">{70 + i}°</div>
-          </div>
-        ))}
-      </div>
-      
-      <div>
-        <h3 className="text-lg font-semibold mb-3">Details</h3>
-        <div className="grid grid-cols-2 gap-4">
-          <div className="bg-gray-50 p-3 rounded-md">
-            <div className="text-sm text-gray-500">Humidity</div>
-            <div className="font-medium">62%</div>
-          </div>
-          <div className="bg-gray-50 p-3 rounded-md">
-            <div className="text-sm text-gray-500">Wind</div>
-            <div className="font-medium">8 mph</div>
-          </div>
-          <div className="bg-gray-50 p-3 rounded-md">
-            <div className="text-sm text-gray-500">Pressure</div>
-            <div className="font-medium">1012 hPa</div>
-          </div>
-          <div className="bg-gray-50 p-3 rounded-md">
-            <div className="text-sm text-gray-500">UV Index</div>
-            <div className="font-medium">3 of 10</div>
-          </div>
-        </div>
-      </div>
-    </div>
-  </div>
-);
+import MusicApp from '@/components/apps/MusicApp';
+import WeatherApp from '@/components/apps/WeatherApp';
+import CodeEditorApp from '@/components/apps/CodeEditorApp';
+import ChatApp from '@/components/apps/ChatApp';
+import MapsApp from '@/components/apps/MapsApp';
 
 const Desktop = () => {
   const { user, logout, windows, openWindow, notifications, markNotificationAsRead } = useOrbitOS();
@@ -187,32 +82,50 @@ const Desktop = () => {
     { 
       id: 'calculator', 
       name: 'Calculator', 
-      icon: 'https://cdn-icons-png.flaticon.com/512/2374/2374370.png', 
+      icon: '/apps/calculator.svg', 
       component: <CalculatorApp /> 
     },
     { 
       id: 'photos', 
       name: 'Photos', 
-      icon: 'https://cdn-icons-png.flaticon.com/512/1088/1088537.png', 
+      icon: '/apps/photos.svg', 
       component: <PhotosApp /> 
     },
     { 
       id: 'mail', 
       name: 'Mail', 
-      icon: 'https://cdn-icons-png.flaticon.com/512/561/561127.png', 
+      icon: '/apps/mail.svg', 
       component: <MailApp /> 
     },
     { 
       id: 'music', 
       name: 'Music', 
-      icon: 'https://cdn-icons-png.flaticon.com/512/2111/2111624.png', 
+      icon: '/apps/music.svg', 
       component: <MusicApp /> 
     },
     { 
       id: 'weather', 
       name: 'Weather', 
-      icon: 'https://cdn-icons-png.flaticon.com/512/1163/1163661.png', 
+      icon: '/apps/weather.svg', 
       component: <WeatherApp /> 
+    },
+    { 
+      id: 'code', 
+      name: 'Code Editor', 
+      icon: '/apps/code.svg', 
+      component: <CodeEditorApp /> 
+    },
+    { 
+      id: 'chat', 
+      name: 'Chat', 
+      icon: '/apps/chat.svg', 
+      component: <ChatApp /> 
+    },
+    { 
+      id: 'maps', 
+      name: 'Maps', 
+      icon: '/apps/maps.svg', 
+      component: <MapsApp /> 
     }
   ];
 
@@ -230,7 +143,7 @@ const Desktop = () => {
   return (
     <div className="flex flex-col h-full">
       {/* Menu Bar (like macOS) */}
-      <div className="h-8 bg-black/80 backdrop-blur-lg text-white flex items-center px-3 justify-between">
+      <div className="h-8 bg-navy-950 text-white flex items-center px-3 justify-between">
         <div className="flex items-center gap-4">
           <div className="flex items-center">
             <Button 
@@ -272,12 +185,12 @@ const Desktop = () => {
               </Button>
             </PopoverTrigger>
             <PopoverContent 
-              className="w-56 p-0 border-gray-200 bg-white/90 backdrop-blur-md" 
+              className="w-56 p-0 border-navy-700 bg-navy-900 text-white" 
               align="end"
               side="bottom"
               sideOffset={5}
             >
-              <div className="p-3 border-b border-gray-200">
+              <div className="p-3 border-b border-navy-800">
                 <div className="flex items-center gap-3">
                   <img 
                     src={user?.avatar} 
@@ -286,7 +199,7 @@ const Desktop = () => {
                   />
                   <div>
                     <h3 className="font-medium">{user?.username}</h3>
-                    <p className="text-xs text-gray-500">Logged in</p>
+                    <p className="text-xs text-gray-400">Logged in</p>
                   </div>
                 </div>
               </div>
@@ -294,7 +207,7 @@ const Desktop = () => {
                 <Button 
                   variant="ghost" 
                   size="sm" 
-                  className="w-full justify-start"
+                  className="w-full justify-start text-white hover:bg-navy-800"
                   onClick={() => handleOpenApp(apps.find(a => a.id === 'settings'))}
                 >
                   <Settings size={16} className="mr-2" />
@@ -303,7 +216,7 @@ const Desktop = () => {
                 <Button 
                   variant="ghost" 
                   size="sm" 
-                  className="w-full justify-start"
+                  className="w-full justify-start text-white hover:bg-navy-800"
                   onClick={handleLogout}
                 >
                   <LogOut size={16} className="mr-2" />
@@ -317,37 +230,37 @@ const Desktop = () => {
 
       {/* Desktop Area */}
       <div 
-        className="flex-grow bg-gradient-to-b from-blue-600 to-purple-700 bg-cover bg-center relative"
+        className="flex-grow navy-gradient relative"
       >
         {/* Dock */}
-        <div className="absolute left-1/2 transform -translate-x-1/2 bottom-3 flex bg-white/10 backdrop-blur-lg rounded-2xl p-2 shadow-sm border border-white/10">
-          {apps.slice(0, 8).map((app) => (
+        <div className="absolute left-1/2 transform -translate-x-1/2 bottom-3 flex bg-navy-900/80 rounded-2xl p-2 border border-navy-800">
+          {apps.slice(0, 10).map((app) => (
             <Tooltip key={app.id}>
               <TooltipTrigger asChild>
                 <button 
                   className="app-icon-dock mx-1 transition-all hover:scale-110"
                   onClick={() => handleOpenApp(app)}
                 >
-                  <div className="w-12 h-12 rounded-xl flex items-center justify-center bg-white/10 backdrop-blur-sm border border-white/10">
+                  <div className="w-12 h-12 rounded-xl flex items-center justify-center bg-navy-800 border border-navy-700">
                     <img src={app.icon} alt={app.name} className="w-8 h-8" />
                   </div>
                 </button>
               </TooltipTrigger>
-              <TooltipContent side="top">
+              <TooltipContent side="top" className="bg-navy-900 text-white border-navy-700">
                 <p>{app.name}</p>
               </TooltipContent>
             </Tooltip>
           ))}
-          <div className="border-l border-white/10 mx-2 h-10"></div>
+          <div className="border-l border-navy-700 mx-2 h-10"></div>
           <Tooltip>
             <TooltipTrigger asChild>
               <button onClick={() => handleOpenApp(apps.find(a => a.id === 'settings'))} className="app-icon-dock mx-1 transition-all hover:scale-110">
-                <div className="w-12 h-12 rounded-xl flex items-center justify-center bg-white/10 backdrop-blur-sm border border-white/10">
+                <div className="w-12 h-12 rounded-xl flex items-center justify-center bg-navy-800 border border-navy-700">
                   <Settings className="w-7 h-7 text-white" />
                 </div>
               </button>
             </TooltipTrigger>
-            <TooltipContent side="top">
+            <TooltipContent side="top" className="bg-navy-900 text-white border-navy-700">
               <p>Settings</p>
             </TooltipContent>
           </Tooltip>
@@ -355,7 +268,7 @@ const Desktop = () => {
 
         {/* App Menu */}
         {isAppMenuOpen && (
-          <div className="absolute top-0 left-0 z-50 w-80 bg-black/70 backdrop-blur-xl text-white border border-white/10 rounded-md mt-8 ml-2 shadow-xl">
+          <div className="absolute top-0 left-0 z-50 w-80 bg-navy-900/95 text-white border border-navy-800 rounded-md mt-8 ml-2">
             <AppMenu apps={apps} onSelectApp={handleOpenApp} />
           </div>
         )}
@@ -368,10 +281,10 @@ const Desktop = () => {
               className="flex flex-col items-center group"
               onClick={() => handleOpenApp(app)}
             >
-              <div className="app-icon-img w-14 h-14 flex items-center justify-center bg-white/5 backdrop-blur-sm rounded-xl mb-2 group-hover:bg-white/10 transition-all border border-white/5">
+              <div className="app-icon-img w-14 h-14 flex items-center justify-center bg-navy-800/50 rounded-xl mb-2 group-hover:bg-navy-700/70 transition-all border border-navy-700/50">
                 <img src={app.icon} alt={app.name} className="w-8 h-8" />
               </div>
-              <span className="text-white text-xs font-medium bg-black/30 px-2 py-0.5 rounded-md backdrop-blur-sm max-w-full overflow-hidden text-ellipsis whitespace-nowrap">
+              <span className="text-white text-xs font-medium bg-navy-950/80 px-2 py-0.5 rounded-md max-w-full overflow-hidden text-ellipsis whitespace-nowrap">
                 {app.name}
               </span>
             </button>

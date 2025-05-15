@@ -70,23 +70,23 @@
   }
   
   ::-webkit-scrollbar-thumb {
-    background-color: rgba(0, 0, 0, 0.1);
+    background-color: rgba(255, 255, 255, 0.1);
     border-radius: 8px;
   }
   
   ::-webkit-scrollbar-thumb:hover {
-    background-color: rgba(0, 0, 0, 0.2);
+    background-color: rgba(255, 255, 255, 0.2);
   }
 }
 
 @layer components {
   .orbit-window {
-    @apply bg-white border border-gray-100 rounded-lg overflow-hidden flex flex-col;
+    @apply bg-navy-800 border border-navy-700 rounded-lg overflow-hidden flex flex-col;
     transition: all 0.2s ease;
   }
   
   .orbit-window-header {
-    @apply bg-gray-50 px-2 py-1.5 flex justify-between items-center border-b border-gray-100;
+    @apply bg-navy-900 px-2 py-1.5 flex justify-between items-center border-b border-navy-700;
   }
   
   .orbit-window-content {
@@ -111,7 +111,7 @@
   }
   
   .orbit-taskbar {
-    @apply bg-orbit-bg border-t border-orbit-border flex items-center p-1;
+    @apply bg-navy-950 border-t border-navy-800 flex items-center p-1;
   }
 }
 
@@ -127,3 +127,12 @@
 .animate-dock-bounce {
   animation: bounce 0.5s ease-in-out;
 }
+
+.navy-gradient {
+  background: linear-gradient(135deg, #101d36 0%, #0c1426 100%);
+}
+
+.app-icon-minimal {
+  @apply bg-navy-700 hover:bg-navy-600 transition-colors rounded-xl p-2 border border-navy-600;
+}
+
