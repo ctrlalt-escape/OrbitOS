@@ -1,4 +1,3 @@
-
 import { useState, useMemo, useCallback } from "react";
 import { Calendar } from "@/components/ui/calendar";
 import { Button } from "@/components/ui/button";
@@ -217,13 +216,17 @@ const CalendarApp = () => {
                   onSelect={(newDate) => newDate && setDate(newDate)}
                   className="rounded-none border-0"
                   styles={{
-                    day_today: {
-                      backgroundColor: "#f3f4f6",
-                      fontWeight: "bold",
+                    head_cell: {
+                      width: '100%',
                     },
-                    day_selected: {
-                      backgroundColor: "#3b82f6",
-                      color: "white",
+                    cell: {
+                      width: '100%',
+                    },
+                    nav_button: {
+                      color: 'currentColor',
+                    },
+                    caption: {
+                      fontWeight: 'bold',
                     },
                   }}
                   modifiers={{
