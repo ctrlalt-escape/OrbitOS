@@ -1,11 +1,16 @@
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Search, Cloud, CloudRain, CloudSnow, CloudLightning, Sun, Droplets, Wind, Thermometer, MapPin, Globe, CloudSun, CloudMoon } from 'lucide-react';
 import { toast } from 'sonner';
+import { useQuery } from '@tanstack/react-query';
+
+// Define API key - in a real app, this would be in an environment variable
+const API_KEY = '5a2f7c004ae14579bf8161926242105';
+const BASE_URL = 'https://api.weatherapi.com/v1';
 
 interface WeatherData {
   location: string;
@@ -30,12 +35,157 @@ interface ForecastDay {
   precipitation: number;
 }
 
+interface HourlyForecast {
+  time: string;
+  temperature: number;
+  condition: string;
+  precipitation: number;
+}
+
 interface SavedLocation {
   id: string;
   name: string;
   country: string;
   temperature: number;
   condition: string;
+}
+
+interface ApiWeatherResponse {
+  location: {
+    name: string;
+    country: string;
+  };
+  current: {
+    temp_f: number;
+    temp_c: number;
+    condition: {
+      text: string;
+      icon: string;
+    };
+    feelslike_f: number;
+    feelslike_c: number;
+    humidity: number;
+    wind_mph: number;
+    wind_kph: number;
+    precip_in: number;
+    precip_mm: number;
+  };
+  forecast?: {
+    forecastday: Array<{
+      date: string;
+      day: {
+        maxtemp_f: number;
+        maxtemp_c: number;
+        mintemp_f: number;
+        mintemp_c: number;
+        condition: {
+          text: string;
+        };
+        daily_chance_of_rain: number;
+      };
+      astro: {
+        sunrise: string;
+        sunset: string;
+      };
+      hour: Array<{
+        time: string;
+        temp_f: number;
+        temp_c: number;
+        condition: {
+          text: string;
+        };
+        chance_of_rain: number;
+      }>;
+    }>;
+  };
+}
+
+async function fetchWeatherData(location: string): Promise<ApiWeatherResponse> {
+  const response = await fetch(`${BASE_URL}/forecast.json?key=${API_KEY}&q=${encodeURIComponent(location)}&days=7&aqi=no&alerts=no`);
+  
+  if (!response.ok) {
+    throw new Error('Failed to fetch weather data');
+  }
+  
+  return response.json();
+}
+
+async function searchLocations(query: string): Promise<any[]> {
+  if (!query.trim()) return [];
+  
+  const response = await fetch(`${BASE_URL}/search.json?key=${API_KEY}&q=${encodeURIComponent(query)}`);
+  
+  if (!response.ok) {
+    throw new Error('Failed to search locations');
+  }
+  
+  return response.json();
+}
+
+// Convert API response to our WeatherData format
+function mapApiToWeatherData(data: ApiWeatherResponse): WeatherData {
+  const firstForecastDay = data.forecast?.forecastday[0];
+  
+  return {
+    location: data.location.name,
+    country: data.location.country,
+    temperature: Math.round(data.current.temp_f),
+    condition: data.current.condition.text,
+    high: firstForecastDay ? Math.round(firstForecastDay.day.maxtemp_f) : Math.round(data.current.temp_f) + 5,
+    low: firstForecastDay ? Math.round(firstForecastDay.day.mintemp_f) : Math.round(data.current.temp_f) - 5,
+    feelsLike: Math.round(data.current.feelslike_f),
+    humidity: data.current.humidity,
+    windSpeed: Math.round(data.current.wind_mph),
+    sunrise: firstForecastDay?.astro.sunrise || '6:15 AM',
+    sunset: firstForecastDay?.astro.sunset || '8:30 PM',
+    precipitation: firstForecastDay?.day.daily_chance_of_rain || 0
+  };
+}
+
+// Convert API forecast to our ForecastDay format
+function mapApiToForecastDays(data: ApiWeatherResponse): ForecastDay[] {
+  if (!data.forecast) return [];
+  
+  const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+  
+  return data.forecast.forecastday.map(day => {
+    const date = new Date(day.date);
+    return {
+      day: days[date.getDay()],
+      condition: day.day.condition.text,
+      high: Math.round(day.day.maxtemp_f),
+      low: Math.round(day.day.mintemp_f),
+      precipitation: day.day.daily_chance_of_rain
+    };
+  });
+}
+
+// Convert API hourly forecast to our HourlyForecast format
+function mapApiToHourlyForecast(data: ApiWeatherResponse): HourlyForecast[] {
+  if (!data.forecast) return [];
+  
+  // Get today's hourly forecast
+  const today = data.forecast.forecastday[0].hour;
+  const now = new Date();
+  const currentHour = now.getHours();
+  
+  // Get the next 12 hours from current hour
+  const next12Hours = [
+    ...today.slice(currentHour),
+    ...data.forecast.forecastday[1]?.hour.slice(0, currentHour) || []
+  ].slice(0, 12);
+  
+  return next12Hours.map((hour, index) => {
+    const hourTime = new Date(hour.time);
+    const timeString = index === 0 ? 'Now' : hourTime.toLocaleTimeString([], { hour: 'numeric' });
+    
+    return {
+      time: timeString,
+      temperature: Math.round(hour.temp_f),
+      condition: hour.condition.text,
+      precipitation: hour.chance_of_rain
+    };
+  });
 }
 
 const WeatherApp = () => {
@@ -65,7 +215,7 @@ const WeatherApp = () => {
     { day: 'Sun', condition: 'Partly Cloudy', high: 76, low: 66, precipitation: 10 }
   ]);
   
-  const [hourlyForecast, setHourlyForecast] = useState([
+  const [hourlyForecast, setHourlyForecast] = useState<HourlyForecast[]>([
     { time: 'Now', temperature: 72, condition: 'Sunny', precipitation: 0 },
     { time: '1 PM', temperature: 73, condition: 'Sunny', precipitation: 0 },
     { time: '2 PM', temperature: 74, condition: 'Sunny', precipitation: 0 },
@@ -77,7 +227,7 @@ const WeatherApp = () => {
     { time: '8 PM', temperature: 68, condition: 'Partly Cloudy', precipitation: 0 },
     { time: '9 PM', temperature: 67, condition: 'Clear', precipitation: 0 },
     { time: '10 PM', temperature: 66, condition: 'Clear', precipitation: 0 },
-    { time: '11 PM', temperature: 65, condition: 'Clear', precipitation: 0 },
+    { time: '11 PM', temperature: 65, condition: 'Clear', precipitation: 0 }
   ]);
   
   const [savedLocations, setSavedLocations] = useState<SavedLocation[]>([
@@ -85,86 +235,104 @@ const WeatherApp = () => {
     { id: 'loc2', name: 'London', country: 'United Kingdom', temperature: 55, condition: 'Rain' },
     { id: 'loc3', name: 'Tokyo', country: 'Japan', temperature: 70, condition: 'Sunny' }
   ]);
+
+  const [useMetric, setUseMetric] = useState<boolean>(false);
+  const [nearbyLocations, setNearbyLocations] = useState<SavedLocation[]>([]);
+
+  // Fetch default weather data on component mount
+  const { isLoading: isLoadingDefaultLocation } = useQuery({
+    queryKey: ['weatherData', 'San Francisco'],
+    queryFn: () => fetchWeatherData('San Francisco'),
+    onSuccess: (data) => {
+      updateWeatherData(data);
+    },
+    onError: (error) => {
+      console.error('Error fetching default weather data:', error);
+      toast.error('Failed to fetch default weather data');
+    }
+  });
+
+  // Fetch weather data when user searches for a location
+  const { isLoading: isSearching, refetch: refetchWeather } = useQuery({
+    queryKey: ['weatherData', searchQuery],
+    queryFn: () => fetchWeatherData(searchQuery),
+    enabled: false, // Don't run on component mount, only when manually triggered
+    onSuccess: (data) => {
+      updateWeatherData(data);
+      addToSavedLocations(data);
+      setSearchQuery('');
+    },
+    onError: (error) => {
+      console.error('Error fetching weather data:', error);
+      toast.error('Failed to find location. Please try another search term.');
+    }
+  });
+
+  // Function to update all weather data from API response
+  const updateWeatherData = (data: ApiWeatherResponse) => {
+    setCurrentWeather(mapApiToWeatherData(data));
+    setForecast(mapApiToForecastDays(data));
+    setHourlyForecast(mapApiToHourlyForecast(data));
+  };
+
+  // Add searched location to saved locations if not already there
+  const addToSavedLocations = (data: ApiWeatherResponse) => {
+    if (!savedLocations.some(loc => 
+      loc.name.toLowerCase() === data.location.name.toLowerCase() && 
+      loc.country === data.location.country)) {
+      
+      const newLocation: SavedLocation = {
+        id: `loc${Date.now()}`,
+        name: data.location.name,
+        country: data.location.country,
+        temperature: Math.round(data.current.temp_f),
+        condition: data.current.condition.text
+      };
+      
+      setSavedLocations([...savedLocations, newLocation]);
+      toast.success(`Added ${data.location.name} to saved locations`);
+    }
+  };
   
   const handleSearch = () => {
     if (!searchQuery.trim()) return;
-    
-    toast.success(`Weather data for ${searchQuery}`, {
-      description: "Updated with latest information"
-    });
-    
-    // Simulate new weather data
-    const conditions = ['Sunny', 'Partly Cloudy', 'Cloudy', 'Rain', 'Thunderstorm', 'Snow'];
-    const randomCondition = conditions[Math.floor(Math.random() * conditions.length)];
-    const randomTemp = Math.floor(Math.random() * 50) + 40; // 40-90°F
-    
-    const newWeather: WeatherData = {
-      location: searchQuery,
-      country: 'United States', // Simplified
-      temperature: randomTemp,
-      condition: randomCondition,
-      high: randomTemp + Math.floor(Math.random() * 10),
-      low: randomTemp - Math.floor(Math.random() * 10),
-      feelsLike: randomTemp + Math.floor(Math.random() * 5) - 2,
-      humidity: Math.floor(Math.random() * 50) + 30,
-      windSpeed: Math.floor(Math.random() * 15) + 1,
-      sunrise: '6:15 AM',
-      sunset: '8:30 PM',
-      precipitation: randomCondition === 'Rain' || randomCondition === 'Thunderstorm' ? Math.floor(Math.random() * 90) + 10 : 0
-    };
-    
-    setCurrentWeather(newWeather);
-    setSearchQuery('');
-    
-    // Add to saved locations if not already there
-    if (!savedLocations.some(loc => loc.name.toLowerCase() === searchQuery.toLowerCase())) {
-      setSavedLocations([
-        ...savedLocations,
-        {
-          id: `loc${Date.now()}`,
-          name: searchQuery,
-          country: 'United States',
-          temperature: randomTemp,
-          condition: randomCondition
-        }
-      ]);
-    }
+    refetchWeather();
   };
 
   const handleRemoveLocation = (id: string) => {
     setSavedLocations(savedLocations.filter(loc => loc.id !== id));
+    toast.info('Location removed from saved list');
   };
 
   const handleSelectLocation = (location: SavedLocation) => {
-    const newWeather: WeatherData = {
-      ...currentWeather,
-      location: location.name,
-      country: location.country,
-      temperature: location.temperature,
-      condition: location.condition
-    };
-    
-    setCurrentWeather(newWeather);
-    toast.info(`Showing weather for ${location.name}`);
+    fetchWeatherData(location.name)
+      .then(data => {
+        updateWeatherData(data);
+        toast.info(`Showing weather for ${location.name}`);
+      })
+      .catch(error => {
+        console.error('Error fetching location weather:', error);
+        toast.error('Failed to fetch weather data for this location');
+      });
   };
 
   const getWeatherIcon = (condition: string, size: number = 24) => {
-    switch (condition.toLowerCase()) {
-      case 'sunny':
-      case 'clear':
-        return <Sun size={size} className="text-yellow-400" />;
-      case 'partly cloudy':
-        return <CloudSun size={size} className="text-gray-300" />;
-      case 'cloudy':
-        return <Cloud size={size} className="text-gray-300" />;
-      case 'rain':
-        return <CloudRain size={size} className="text-blue-400" />;
-      case 'thunderstorm':
-        return <CloudLightning size={size} className="text-yellow-400" />;
-      case 'snow':
-        return <CloudSnow size={size} className="text-white" />;
-      default:
-        return <Cloud size={size} className="text-gray-300" />;
+    const conditionLower = condition.toLowerCase();
+    
+    if (conditionLower.includes('sunny') || conditionLower.includes('clear')) {
+      return <Sun size={size} className="text-yellow-400" />;
+    } else if (conditionLower.includes('partly cloudy')) {
+      return <CloudSun size={size} className="text-gray-300" />;
+    } else if (conditionLower.includes('cloudy') || conditionLower.includes('overcast')) {
+      return <Cloud size={size} className="text-gray-300" />;
+    } else if (conditionLower.includes('rain') || conditionLower.includes('drizzle') || conditionLower.includes('shower')) {
+      return <CloudRain size={size} className="text-blue-400" />;
+    } else if (conditionLower.includes('thunder') || conditionLower.includes('lightning')) {
+      return <CloudLightning size={size} className="text-yellow-400" />;
+    } else if (conditionLower.includes('snow') || conditionLower.includes('sleet') || conditionLower.includes('ice')) {
+      return <CloudSnow size={size} className="text-white" />;
+    } else {
+      return <Cloud size={size} className="text-gray-300" />;
     }
   };
 
@@ -175,10 +343,42 @@ const WeatherApp = () => {
   };
 
   const handleToggleUnit = () => {
-    toast.info('Temperature unit switched', {
-      description: 'You can customize this in settings'
-    });
+    setUseMetric(!useMetric);
+    toast.info(`Temperature unit switched to ${useMetric ? 'Fahrenheit' : 'Celsius'}`);
   };
+
+  // Effect to fetch nearby locations
+  useEffect(() => {
+    // For demonstration, we'll use a geolocation API in a real app
+    // For now, we'll set static nearby locations based on current location
+    if (currentWeather.location) {
+      // This would be replaced by a real API call in a production app
+      const mockNearbyLocations: SavedLocation[] = [
+        { 
+          id: 'nearby1', 
+          name: currentWeather.location === 'San Francisco' ? 'Oakland' : 'Nearby City 1', 
+          country: currentWeather.country, 
+          temperature: currentWeather.temperature - 2, 
+          condition: currentWeather.condition 
+        },
+        { 
+          id: 'nearby2', 
+          name: currentWeather.location === 'San Francisco' ? 'Berkeley' : 'Nearby City 2', 
+          country: currentWeather.country, 
+          temperature: currentWeather.temperature - 4, 
+          condition: currentWeather.condition 
+        },
+        { 
+          id: 'nearby3', 
+          name: currentWeather.location === 'San Francisco' ? 'San Jose' : 'Nearby City 3', 
+          country: currentWeather.country, 
+          temperature: currentWeather.temperature + 2, 
+          condition: currentWeather.condition 
+        }
+      ];
+      setNearbyLocations(mockNearbyLocations);
+    }
+  }, [currentWeather.location]);
 
   return (
     <div className="h-full flex bg-navy-950 text-white">
@@ -223,7 +423,10 @@ const WeatherApp = () => {
                           </div>
                           <div className="flex items-center">
                             {getWeatherIcon(location.condition, 18)}
-                            <span className="ml-1">{location.temperature}°</span>
+                            <span className="ml-1">
+                              {useMetric ? Math.round((location.temperature - 32) * 5/9) : location.temperature}°
+                              {useMetric ? 'C' : 'F'}
+                            </span>
                             <button 
                               className="ml-2 text-gray-400 hover:text-white p-1"
                               onClick={(e) => {
@@ -255,42 +458,27 @@ const WeatherApp = () => {
               <ScrollArea className="h-[calc(100vh-200px)]">
                 <div className="p-3">
                   <div className="space-y-2">
-                    <div className="p-2 hover:bg-navy-800 rounded cursor-pointer">
-                      <div className="flex justify-between">
-                        <div>
-                          <div className="font-medium">Oakland</div>
-                          <div className="text-xs text-gray-400">10 miles away</div>
-                        </div>
-                        <div className="flex items-center">
-                          <Sun size={18} className="text-yellow-400" />
-                          <span className="ml-1">70°</span>
-                        </div>
-                      </div>
-                    </div>
-                    <div className="p-2 hover:bg-navy-800 rounded cursor-pointer">
-                      <div className="flex justify-between">
-                        <div>
-                          <div className="font-medium">Berkeley</div>
-                          <div className="text-xs text-gray-400">12 miles away</div>
-                        </div>
-                        <div className="flex items-center">
-                          <CloudSun size={18} className="text-gray-300" />
-                          <span className="ml-1">68°</span>
+                    {nearbyLocations.map(location => (
+                      <div 
+                        key={location.id}
+                        className="p-2 hover:bg-navy-800 rounded cursor-pointer"
+                        onClick={() => handleSelectLocation(location)}
+                      >
+                        <div className="flex justify-between">
+                          <div>
+                            <div className="font-medium">{location.name}</div>
+                            <div className="text-xs text-gray-400">Nearby</div>
+                          </div>
+                          <div className="flex items-center">
+                            {getWeatherIcon(location.condition, 18)}
+                            <span className="ml-1">
+                              {useMetric ? Math.round((location.temperature - 32) * 5/9) : location.temperature}°
+                              {useMetric ? 'C' : 'F'}
+                            </span>
+                          </div>
                         </div>
                       </div>
-                    </div>
-                    <div className="p-2 hover:bg-navy-800 rounded cursor-pointer">
-                      <div className="flex justify-between">
-                        <div>
-                          <div className="font-medium">San Jose</div>
-                          <div className="text-xs text-gray-400">50 miles away</div>
-                        </div>
-                        <div className="flex items-center">
-                          <Sun size={18} className="text-yellow-400" />
-                          <span className="ml-1">74°</span>
-                        </div>
-                      </div>
-                    </div>
+                    ))}
                   </div>
                 </div>
               </ScrollArea>
@@ -313,20 +501,21 @@ const WeatherApp = () => {
           </div>
           
           <div className="text-6xl font-light mb-2">
-            {currentWeather.temperature}°
+            {useMetric ? Math.round((currentWeather.temperature - 32) * 5/9) : currentWeather.temperature}°
             <Button 
               variant="ghost" 
               size="sm" 
               className="text-xs align-top mt-2 ml-1"
               onClick={handleToggleUnit}
             >
-              F
+              {useMetric ? 'C' : 'F'}
             </Button>
           </div>
           
           <div className="text-xl mb-1">{currentWeather.condition}</div>
           <div className="text-gray-400 flex items-center justify-center">
-            H: {currentWeather.high}° L: {currentWeather.low}°
+            H: {useMetric ? Math.round((currentWeather.high - 32) * 5/9) : currentWeather.high}° 
+            L: {useMetric ? Math.round((currentWeather.low - 32) * 5/9) : currentWeather.low}°
           </div>
         </div>
         
@@ -348,7 +537,9 @@ const WeatherApp = () => {
                       <div className="mb-2">
                         {getWeatherIcon(hour.condition, 24)}
                       </div>
-                      <div className="text-lg">{hour.temperature}°</div>
+                      <div className="text-lg">
+                        {useMetric ? Math.round((hour.temperature - 32) * 5/9) : hour.temperature}°
+                      </div>
                       {hour.precipitation > 0 && (
                         <div className="flex items-center text-xs text-blue-400 mt-1">
                           <Droplets size={12} className="mr-0.5" />
@@ -363,17 +554,17 @@ const WeatherApp = () => {
                   <div className="bg-navy-800 p-4 rounded-lg">
                     <h3 className="text-sm mb-2 text-gray-400">Precipitation</h3>
                     <div className="flex space-x-2 overflow-hidden">
-                      {[0, 0, 0, 20, 40, 60, 80, 40, 20, 0, 0, 0].map((precip, index) => (
+                      {hourlyForecast.map((hour, index) => (
                         <div key={index} className="flex-1 flex flex-col items-center">
                           <div className="text-xs mb-1">{index + 1}</div>
                           <div 
                             className="w-full bg-blue-500 opacity-30 rounded-sm" 
-                            style={{ height: `${precip}%`, minHeight: '4px' }}
+                            style={{ height: `${hour.precipitation}%`, minHeight: '4px' }}
                           ></div>
                         </div>
                       ))}
                     </div>
-                    <div className="mt-1 text-xs text-gray-400 text-center">Precipitation forecast (12 hours)</div>
+                    <div className="mt-1 text-xs text-gray-400 text-center">Precipitation forecast ({hourlyForecast.length} hours)</div>
                   </div>
                   
                   <div className="bg-navy-800 p-4 rounded-lg">
@@ -419,20 +610,31 @@ const WeatherApp = () => {
                         </div>
                       </div>
                       <div className="w-16 flex justify-between">
-                        <span className="text-gray-400">{day.low}°</span>
-                        <span>{day.high}°</span>
+                        <span className="text-gray-400">
+                          {useMetric ? Math.round((day.low - 32) * 5/9) : day.low}°
+                        </span>
+                        <span>
+                          {useMetric ? Math.round((day.high - 32) * 5/9) : day.high}°
+                        </span>
                       </div>
                     </div>
                   ))}
                 </div>
                 
                 <div className="mt-6 bg-navy-800 p-4 rounded-lg">
-                  <h3 className="text-sm mb-3 font-medium">10-Day Forecast Summary</h3>
+                  <h3 className="text-sm mb-3 font-medium">7-Day Forecast Summary</h3>
                   <p className="text-sm text-gray-300">
-                    Expect mostly sunny conditions through the early part of the week with 
-                    temperatures in the mid-70s. A weather system will move in around Thursday 
-                    bringing rain and slightly cooler temperatures. The weekend should clear up 
-                    with sunny skies returning.
+                    {forecast.length > 0 ? (
+                      <>
+                        Expect {forecast[0].condition.toLowerCase()} conditions today with 
+                        temperatures reaching {useMetric ? Math.round((forecast[0].high - 32) * 5/9) : forecast[0].high}°{useMetric ? 'C' : 'F'}. 
+                        {forecast.some(day => day.precipitation > 50) ? 
+                          " Watch for rain in the forecast this week." : 
+                          " Generally clear conditions expected throughout the week."}
+                      </>
+                    ) : (
+                      "Forecast data is being loaded..."
+                    )}
                   </p>
                 </div>
               </div>
@@ -448,9 +650,13 @@ const WeatherApp = () => {
                       <Thermometer size={18} className="text-gray-400 mr-2" />
                       <h3 className="text-sm font-medium">Feels Like</h3>
                     </div>
-                    <div className="text-2xl">{currentWeather.feelsLike}°</div>
+                    <div className="text-2xl">
+                      {useMetric ? Math.round((currentWeather.feelsLike - 32) * 5/9) : currentWeather.feelsLike}°
+                    </div>
                     <div className="text-xs text-gray-400 mt-1">
-                      Similar to the actual temperature
+                      {currentWeather.feelsLike > currentWeather.temperature ? "Feels warmer than actual temperature" : 
+                       currentWeather.feelsLike < currentWeather.temperature ? "Feels cooler than actual temperature" : 
+                       "Similar to the actual temperature"}
                     </div>
                   </div>
                   
@@ -461,7 +667,9 @@ const WeatherApp = () => {
                     </div>
                     <div className="text-2xl">{currentWeather.humidity}%</div>
                     <div className="text-xs text-gray-400 mt-1">
-                      Dew point: 58°
+                      {currentWeather.humidity > 70 ? "High humidity" : 
+                       currentWeather.humidity < 30 ? "Low humidity" : 
+                       "Moderate humidity"}
                     </div>
                   </div>
                   
@@ -481,9 +689,13 @@ const WeatherApp = () => {
                       <Sun size={18} className="text-gray-400 mr-2" />
                       <h3 className="text-sm font-medium">UV Index</h3>
                     </div>
-                    <div className="text-2xl">5</div>
+                    <div className="text-2xl">
+                      {currentWeather.condition.toLowerCase().includes('sunny') ? 5 : 
+                       currentWeather.condition.toLowerCase().includes('cloud') ? 3 : 2}
+                    </div>
                     <div className="text-xs text-gray-400 mt-1">
-                      Moderate
+                      {currentWeather.condition.toLowerCase().includes('sunny') ? "Moderate" : 
+                       currentWeather.condition.toLowerCase().includes('cloud') ? "Low" : "Low"}
                     </div>
                   </div>
                   
@@ -509,9 +721,15 @@ const WeatherApp = () => {
                       <Globe size={18} className="text-gray-400 mr-2" />
                       <h3 className="text-sm font-medium">Air Quality</h3>
                     </div>
-                    <div className="text-2xl">Good</div>
+                    <div className="text-2xl">
+                      {currentWeather.condition.toLowerCase().includes('rain') ? "Good" :
+                       currentWeather.condition.toLowerCase().includes('cloud') ? "Moderate" : 
+                       "Good"}
+                    </div>
                     <div className="text-xs text-gray-400 mt-1">
-                      AQI: 32
+                      AQI: {currentWeather.condition.toLowerCase().includes('rain') ? 32 :
+                            currentWeather.condition.toLowerCase().includes('cloud') ? 54 : 
+                            45}
                     </div>
                   </div>
                 </div>
