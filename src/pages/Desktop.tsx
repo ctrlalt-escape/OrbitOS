@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { useOrbitOS } from '../context/OrbitOSContext';
 import { Button } from '@/components/ui/button';
@@ -24,6 +23,7 @@ import WeatherApp from '@/components/apps/WeatherApp';
 import CodeEditorApp from '@/components/apps/CodeEditorApp';
 import ChatApp from '@/components/apps/ChatApp';
 import MapsApp from '@/components/apps/MapsApp';
+import StickyNotesApp from '@/components/apps/StickyNotesApp';
 
 const Desktop = () => {
   const { user, logout, windows, openWindow, notifications, markNotificationAsRead } = useOrbitOS();
@@ -48,6 +48,12 @@ const Desktop = () => {
       name: 'Notes', 
       icon: '/apps/notes.svg', 
       component: <NotesApp /> 
+    },
+    { 
+      id: 'stickynotes', 
+      name: 'Sticky Notes', 
+      icon: '/apps/stickynotes.svg', 
+      component: <StickyNotesApp /> 
     },
     { 
       id: 'browser', 

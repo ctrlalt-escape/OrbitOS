@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -243,12 +242,14 @@ const WeatherApp = () => {
   const { isLoading: isLoadingDefaultLocation } = useQuery({
     queryKey: ['weatherData', 'San Francisco'],
     queryFn: () => fetchWeatherData('San Francisco'),
-    onSuccess: (data) => {
-      updateWeatherData(data);
-    },
-    onError: (error) => {
-      console.error('Error fetching default weather data:', error);
-      toast.error('Failed to fetch default weather data');
+    onSettled: (data, error) => {
+      if (data) {
+        updateWeatherData(data);
+      }
+      if (error) {
+        console.error('Error fetching default weather data:', error);
+        toast.error('Failed to fetch default weather data');
+      }
     }
   });
 
@@ -257,14 +258,16 @@ const WeatherApp = () => {
     queryKey: ['weatherData', searchQuery],
     queryFn: () => fetchWeatherData(searchQuery),
     enabled: false, // Don't run on component mount, only when manually triggered
-    onSuccess: (data) => {
-      updateWeatherData(data);
-      addToSavedLocations(data);
-      setSearchQuery('');
-    },
-    onError: (error) => {
-      console.error('Error fetching weather data:', error);
-      toast.error('Failed to find location. Please try another search term.');
+    onSettled: (data, error) => {
+      if (data) {
+        updateWeatherData(data);
+        addToSavedLocations(data);
+        setSearchQuery('');
+      }
+      if (error) {
+        console.error('Error fetching weather data:', error);
+        toast.error('Failed to find location. Please try another search term.');
+      }
     }
   });
 
