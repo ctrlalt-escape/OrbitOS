@@ -13,6 +13,10 @@ A modern, web-based operating system UI with a minimalist navy blue theme and a 
   - Sticky Notes (with local storage)
   - Calculator
   - Calendar
+  - App Store (with web app browsing via CORS proxy)
+  - Games (with playable games via iframes)
+  - Video Player (with media controls)
+  - Browser (with navigation and history)
   - And more!
 - Clickable desktop icons and dock
 - Window management system
@@ -27,6 +31,10 @@ A modern, web-based operating system UI with a minimalist navy blue theme and a 
 - Sticky Notes: Create, edit, and save notes
 - Music Player: Audio playback controls
 - Code Editor: Syntax highlighting
+- Browser: Web browsing with tabs and history
+- App Store: Browse and load web applications
+- Games: Play various games in a browser environment
+- Video Player: Play sample videos with controls
 
 ### In Development
 - Ultraviolet proxy integration for browser app

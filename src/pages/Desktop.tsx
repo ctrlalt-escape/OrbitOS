@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { useOrbitOS } from '../context/OrbitOSContext';
 import { Button } from '@/components/ui/button';
@@ -24,6 +25,9 @@ import CodeEditorApp from '@/components/apps/CodeEditorApp';
 import ChatApp from '@/components/apps/ChatApp';
 import MapsApp from '@/components/apps/MapsApp';
 import StickyNotesApp from '@/components/apps/StickyNotesApp';
+import AppStoreApp from '@/components/apps/AppStoreApp';
+import GamesApp from '@/components/apps/GamesApp';
+import VideoApp from '@/components/apps/VideoApp';
 
 const Desktop = () => {
   const { user, logout, windows, openWindow, notifications, markNotificationAsRead } = useOrbitOS();
@@ -132,6 +136,24 @@ const Desktop = () => {
       name: 'Maps', 
       icon: '/apps/maps.svg', 
       component: <MapsApp /> 
+    },
+    { 
+      id: 'appstore', 
+      name: 'App Store', 
+      icon: '/apps/appstore.svg', 
+      component: <AppStoreApp /> 
+    },
+    { 
+      id: 'games', 
+      name: 'Games', 
+      icon: '/apps/games.svg', 
+      component: <GamesApp /> 
+    },
+    { 
+      id: 'video', 
+      name: 'Video', 
+      icon: '/apps/video.svg', 
+      component: <VideoApp /> 
     }
   ];
 
@@ -140,7 +162,7 @@ const Desktop = () => {
     setTimeout(logout, 1000);
   };
   
-  const handleOpenApp = (app: any) => {
+  const handleOpenApp = (app) => {
     console.log('Opening app:', app.id);
     openWindow(app);
     setIsAppMenuOpen(false);
@@ -149,7 +171,7 @@ const Desktop = () => {
   return (
     <div className="flex flex-col h-full">
       {/* Menu Bar (like macOS) */}
-      <div className="h-8 bg-navy-950 text-white flex items-center px-3 justify-between">
+      <div className="h-8 bg-navy-950 text-white flex items-center px-3 justify-between z-10">
         <div className="flex items-center gap-4">
           <div className="flex items-center">
             <Button 
@@ -235,11 +257,9 @@ const Desktop = () => {
       </div>
 
       {/* Desktop Area */}
-      <div 
-        className="flex-grow navy-gradient relative"
-      >
+      <div className="flex-grow navy-gradient relative">
         {/* Dock */}
-        <div className="absolute left-1/2 transform -translate-x-1/2 bottom-3 flex bg-navy-900/80 rounded-2xl p-2 border border-navy-800">
+        <div className="absolute left-1/2 transform -translate-x-1/2 bottom-3 flex bg-navy-900/80 rounded-2xl p-2 border border-navy-800 backdrop-blur-md z-10">
           {apps.slice(0, 10).map((app) => (
             <Tooltip key={app.id}>
               <TooltipTrigger asChild>
@@ -279,12 +299,12 @@ const Desktop = () => {
           </div>
         )}
 
-        {/* Desktop Icons - Simplified grid */}
-        <div className="p-6 grid grid-cols-[repeat(auto-fill,minmax(6rem,1fr))] gap-4">
+        {/* Desktop Icons - Make sure they're properly clickable */}
+        <div className="p-6 grid grid-cols-[repeat(auto-fill,minmax(6rem,1fr))] gap-4 z-0">
           {apps.map((app) => (
             <button 
               key={app.id} 
-              className="flex flex-col items-center group"
+              className="flex flex-col items-center group cursor-pointer"
               onClick={() => handleOpenApp(app)}
             >
               <div className="app-icon-img w-14 h-14 flex items-center justify-center bg-navy-800/50 rounded-xl mb-2 group-hover:bg-navy-700/70 transition-all border border-navy-700/50">
