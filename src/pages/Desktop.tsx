@@ -174,7 +174,11 @@ const Desktop = () => {
 
   // ChromeOS style date formatting
   const formatDate = () => {
-    const options = { weekday: 'short', month: 'short', day: 'numeric' };
+    const options: Intl.DateTimeFormatOptions = { 
+      weekday: 'short', 
+      month: 'short', 
+      day: 'numeric' 
+    };
     return currentTime.toLocaleDateString('en-US', options);
   };
 
