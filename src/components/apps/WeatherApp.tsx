@@ -242,12 +242,14 @@ const WeatherApp = () => {
   const { isLoading: isLoadingDefaultLocation } = useQuery({
     queryKey: ['weatherData', 'San Francisco'],
     queryFn: () => fetchWeatherData('San Francisco'),
-    onSuccess: (data) => {
-      updateWeatherData(data);
-    },
-    onError: (error) => {
-      console.error('Error fetching default weather data:', error);
-      toast.error('Failed to fetch default weather data');
+    meta: {
+      onSuccess: (data: ApiWeatherResponse) => {
+        updateWeatherData(data);
+      },
+      onError: (error: Error) => {
+        console.error('Error fetching default weather data:', error);
+        toast.error('Failed to fetch default weather data');
+      }
     }
   });
 
@@ -256,14 +258,16 @@ const WeatherApp = () => {
     queryKey: ['weatherData', searchQuery],
     queryFn: () => fetchWeatherData(searchQuery),
     enabled: false, // Don't run on component mount, only when manually triggered
-    onSuccess: (data) => {
-      updateWeatherData(data);
-      addToSavedLocations(data);
-      setSearchQuery('');
-    },
-    onError: (error) => {
-      console.error('Error fetching weather data:', error);
-      toast.error('Failed to find location. Please try another search term.');
+    meta: {
+      onSuccess: (data: ApiWeatherResponse) => {
+        updateWeatherData(data);
+        addToSavedLocations(data);
+        setSearchQuery('');
+      },
+      onError: (error: Error) => {
+        console.error('Error fetching weather data:', error);
+        toast.error('Failed to find location. Please try another search term.');
+      }
     }
   });
 
