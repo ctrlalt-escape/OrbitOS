@@ -8,6 +8,7 @@ import { Bell, Settings, LogOut, Clock, Wifi, Battery, Volume2 } from 'lucide-re
 import WindowManager from '@/components/WindowManager';
 import { toast } from 'sonner';
 import AppMenu from '@/components/AppMenu';
+import QuickSettings from '@/components/QuickSettings';
 
 // Import app components
 import NotesApp from '@/components/apps/NotesApp';
@@ -168,9 +169,18 @@ const Desktop = () => {
     setIsAppMenuOpen(false);
   };
 
+  // Calculate which apps are active (have open windows)
+  const activeApps = windows.map(window => window.id);
+
+  // ChromeOS style date formatting
+  const formatDate = () => {
+    const options = { weekday: 'short', month: 'short', day: 'numeric' };
+    return currentTime.toLocaleDateString('en-US', options);
+  };
+
   return (
     <div className="flex flex-col h-full">
-      {/* Menu Bar (like macOS) */}
+      {/* Menu Bar (like ChromeOS) */}
       <div className="h-8 bg-navy-950 text-white flex items-center px-3 justify-between z-10">
         <div className="flex items-center gap-4">
           <div className="flex items-center">
@@ -186,25 +196,22 @@ const Desktop = () => {
             </Button>
             <span className="font-semibold ml-2">OrbitOS</span>
           </div>
-
-          {/* Active app menu items - simplified */}
-          <div className="flex items-center gap-3 text-sm">
-            <span className="hover:bg-white/10 px-2 py-1 rounded cursor-pointer">File</span>
-            <span className="hover:bg-white/10 px-2 py-1 rounded cursor-pointer">Edit</span>
-            <span className="hover:bg-white/10 px-2 py-1 rounded cursor-pointer">View</span>
-          </div>
         </div>
 
         {/* System Status Icons */}
-        <div className="flex items-center gap-2">
-          <span className="text-sm">
-            {currentTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-          </span>
+        <div className="flex items-center gap-3">
+          <div className="text-white/80 text-xs flex flex-col items-end">
+            <span>{currentTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
+            <span className="text-[10px] text-white/60">{formatDate()}</span>
+          </div>
+          
+          {/* Quick Settings */}
+          <QuickSettings />
 
           {/* User Menu */}
           <Popover>
             <PopoverTrigger asChild>
-              <Button variant="ghost" size="icon" className="rounded-full p-0 h-6 w-6 overflow-hidden ml-2">
+              <Button variant="ghost" size="icon" className="rounded-full p-0 h-6 w-6 overflow-hidden ml-1">
                 <img 
                   src={user?.avatar} 
                   alt={user?.username} 
@@ -258,38 +265,31 @@ const Desktop = () => {
 
       {/* Desktop Area */}
       <div className="flex-grow navy-gradient relative">
-        {/* Dock */}
-        <div className="absolute left-1/2 transform -translate-x-1/2 bottom-3 flex bg-navy-900/80 rounded-2xl p-2 border border-navy-800 backdrop-blur-md z-10">
-          {apps.slice(0, 10).map((app) => (
-            <Tooltip key={app.id}>
-              <TooltipTrigger asChild>
-                <button 
-                  className="app-icon-dock mx-1 transition-all hover:scale-110"
-                  onClick={() => handleOpenApp(app)}
-                >
-                  <div className="w-12 h-12 rounded-xl flex items-center justify-center bg-navy-800 border border-navy-700">
-                    <img src={app.icon} alt={app.name} className="w-8 h-8" />
-                  </div>
-                </button>
-              </TooltipTrigger>
-              <TooltipContent side="top" className="bg-navy-900 text-white border-navy-700">
-                <p>{app.name}</p>
-              </TooltipContent>
-            </Tooltip>
-          ))}
-          <div className="border-l border-navy-700 mx-2 h-10"></div>
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <button onClick={() => handleOpenApp(apps.find(a => a.id === 'settings'))} className="app-icon-dock mx-1 transition-all hover:scale-110">
-                <div className="w-12 h-12 rounded-xl flex items-center justify-center bg-navy-800 border border-navy-700">
-                  <Settings className="w-7 h-7 text-white" />
-                </div>
-              </button>
-            </TooltipTrigger>
-            <TooltipContent side="top" className="bg-navy-900 text-white border-navy-700">
-              <p>Settings</p>
-            </TooltipContent>
-          </Tooltip>
+        {/* ChromeOS-style Shelf (dock at bottom) */}
+        <div className="absolute left-1/2 transform -translate-x-1/2 bottom-3 flex bg-navy-950/90 rounded-2xl p-1.5 border border-navy-800 backdrop-blur-md z-10">
+          {apps.slice(0, 12).map((app) => {
+            const isActive = activeApps.includes(app.id);
+            
+            return (
+              <Tooltip key={app.id}>
+                <TooltipTrigger asChild>
+                  <button 
+                    className={`app-icon-dock mx-1 transition-all hover:scale-105 relative ${
+                      isActive ? 'after:content-[""] after:absolute after:left-1/2 after:-translate-x-1/2 after:bottom-[-5px] after:w-1 after:h-1 after:bg-white after:rounded-full' : ''
+                    }`}
+                    onClick={() => handleOpenApp(app)}
+                  >
+                    <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${isActive ? 'bg-navy-700' : 'bg-navy-800/70'} border border-navy-700`}>
+                      <img src={app.icon} alt={app.name} className="w-6 h-6" />
+                    </div>
+                  </button>
+                </TooltipTrigger>
+                <TooltipContent side="top" className="bg-navy-900 text-white border-navy-700">
+                  <p>{app.name}</p>
+                </TooltipContent>
+              </Tooltip>
+            );
+          })}
         </div>
 
         {/* App Menu */}
@@ -307,7 +307,7 @@ const Desktop = () => {
               className="flex flex-col items-center group cursor-pointer"
               onClick={() => handleOpenApp(app)}
             >
-              <div className="app-icon-img w-14 h-14 flex items-center justify-center bg-navy-800/50 rounded-xl mb-2 group-hover:bg-navy-700/70 transition-all border border-navy-700/50">
+              <div className="app-icon-img w-14 h-14 flex items-center justify-center bg-navy-800/50 rounded-xl mb-2 group-hover:bg-navy-700/70 transition-all border border-navy-700/50 backdrop-blur-sm">
                 <img src={app.icon} alt={app.name} className="w-8 h-8" />
               </div>
               <span className="text-white text-xs font-medium bg-navy-950/80 px-2 py-0.5 rounded-md max-w-full overflow-hidden text-ellipsis whitespace-nowrap">
